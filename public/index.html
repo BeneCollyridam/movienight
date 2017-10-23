@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movienight</title>
+</head>
+<style type="text/css">
+  video {
+    min-width: 100px;
+    height: 100%;
+  }
+  button {
+    color: white;
+    background: black;
+  }
+  input {
+    color: white;
+    background: black;
+  }
+</style>
+<body>
+  <video id="video" controls>
+    <source src="http://techslides.com/demos/sample-videos/small.mp4">
+  </video>
+  <br>
+  <input type="text" name="url" id="url"><button onclick="changeUrl()">Update video</button>
+  <br>
+  <button onclick="playPauseVideo()">Play/Pause</button>
+  <button onclick="sync()">Sync</button>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+    var video = document.getElementById('video');
+    var url = document.getElementById('url');
+
+    socket.on('new url', function newUrl(data){
+      console.log(`new url ${video.currentSrc} ${data.url} ${!video.currentSrc != data.url}`)
+      if(video.currentSrc != data.url){
+        console.log(`New url set, ${data.url}`);
+        setVideoSrc(data.url);
+      }
+    })
+
+    socket.on('play', function play(){
+      video.play();
+    })
+
+    socket.on('pause', function pause(){
+      video.pause();
+    })
+
+    socket.on('sync', function syncronize(data){
+      console.log('Syncing');
+      video.currentTime = data.time;
+    })
+
+    let changeUrl = () => {
+      setVideoSrc(url.value);
+      socket.emit('new source', {url: url.value});
+    }
+
+    let setVideoSrc = (src) => {
+      for (let i = 0; i < video.children.length; i++) {
+        video.removeChild(video.children[i]);
+      }
+      let source = document.createElement('source');
+      source.setAttribute('src', src);
+      video.appendChild(source);
+      video.load();
+    }
+
+    let playPauseVideo = () => {
+      if(video.paused){
+        socket.emit('play');
+      } else {
+        socket.emit('pause');
+      }
+    }
+
+    let sync = () => {
+      socket.emit('sync', {time: video.currentTime});
+    }
+  </script>
+</body>
+</html>
