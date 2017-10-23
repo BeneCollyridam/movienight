@@ -2,7 +2,7 @@ let express = require('express');
 let app = express();
 let http = require('http').Server(app);
 let io  = require('socket.io')(http);
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.static('public'));
 
